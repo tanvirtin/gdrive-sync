@@ -8,6 +8,9 @@ class File:
 		self.__name = name
 		self.__directory = directory
 		self.__date = date
+
+	def __repr__(self):
+		return self.getName
 	'''
 		Name: getName
 		Purpose: A getter method for the name of the file.

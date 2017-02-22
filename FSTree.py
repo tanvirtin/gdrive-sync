@@ -35,7 +35,6 @@ class Tree():
 			cd = self.__root["ROOT"]
 			while numberOfFolders != 0:
 				temp = ""
-				innerFlag = False
 				if (fileObj.getDir)[index] == "/":
 					index += 1
 				while (fileObj.getDir)[index] != "/":
@@ -47,10 +46,8 @@ class Tree():
 						for key, value in cd[i].items():
 							if temp == key:
 								flag = True
-								innerFlag = False
 								cd = cd[i][temp]
 								break
-					if innerFlag == False: break
 				if not flag:
 					cd.append(self.__tree())
 					cd[len(cd) - 1][temp] = []
@@ -131,7 +128,6 @@ class Tree():
 			index = 0
 			cd = self.__root["ROOT"]
 			while numberOfFolders != 0:
-				innerFlag = False # changes made
 				temp = ""
 				if (fileObj.getDir)[index] == "/":
 					index += 1
@@ -144,9 +140,7 @@ class Tree():
 							if temp == key:
 								cd = cd[i][temp]
 								flag = True
-								innerFlag = True # changes made
 								break
-					if innerFlag == True: break # check later
 				numberOfFolders -= 1 # folder done
 			for i in range(len(cd)):
 				flag2 = False
