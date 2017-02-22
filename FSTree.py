@@ -9,6 +9,9 @@ class Tree():
 	def __init__(self):
 		self.__root = self.__tree()
 		self.__root["ROOT"] = []
+	
+	def __repr__(self):
+		return "\n"
 	'''
 		Name: __tree
 		Purpose: Private method for constructing the multidimensional dictionary,
@@ -36,6 +39,7 @@ class Tree():
 			index = 0 # index to match with the forward slash
 			cd = self.__root["ROOT"] # lets start from our root node
 			while numberOfFolders != 0:
+				innerFlag = False # this flag is needed to prevent one of the loop from repeating
 				temp = "" # empty string to hold each folder name
 				if (fileObj.getDir)[index] == "/": # this if statment prevents us from being trapped on forward slash forever
 					index += 1
@@ -48,8 +52,10 @@ class Tree():
 						for key, value in cd[i].items(): 
 							if temp == key: # if the folder with the name we are looking for exists
 								flag = True # this is important because by the end if we don't have the flag as True that means we need to create a new folder
+								innerFlag = True # prevents further execution of the loop
 								cd = cd[i][temp] # then simply cd into the folder
 								break
+					if innerFlag == True: break # breaks the loop and goes into a new instance
 				if not flag: # so we check if a folder has been created or not 
 					cd.append(self.__tree()) # if not simply create the folder
 					cd[len(cd) - 1][temp] = []
@@ -87,17 +93,16 @@ class Tree():
 					index += 1
 				while (fileObj.getDir)[index] != "/":
 					temp += (fileObj.getDir)[index]
-					index += 1
-				
+					index += 1		
 				for i in range(len(cd)):
 					if isinstance(cd[i], dict):
 						for key, value in cd[i].items():
 							if temp == key:
 								cd = cd[i][temp]
 								flag = True # found the following subfolder
-								innerFlag = True # changes made
+								innerFlag = True # found the folder no need to check anymore
 								break
-					if innerFlag == True: break # changes made
+					if innerFlag == True: break # found the folder no need to chack anymore
 				numberOfFolders -= 1 # folder done
 			for i in range(len(cd)):
 				if not isinstance(cd[i], dict):
@@ -130,6 +135,7 @@ class Tree():
 			index = 0
 			cd = self.__root["ROOT"]
 			while numberOfFolders != 0:
+				innerFlag = False
 				temp = ""
 				if (fileObj.getDir)[index] == "/":
 					index += 1
@@ -142,7 +148,9 @@ class Tree():
 							if temp == key:
 								cd = cd[i][temp]
 								flag = True
+								innerFlag = True
 								break
+					if innerFlag == True: break
 				numberOfFolders -= 1 # folder done
 			for i in range(len(cd)):
 				flag2 = False
