@@ -39,13 +39,13 @@ class UnixClient():
 			ls.remove("")
 
 		for i in range(len(ls)):
-			if not isdir(path + ls[i]): # store all the files in the sub folder into an array as file objects
+			if not isdir(ls[i]): # store all the files in the sub folder into an array as file objects
 				obj = File(ls[i], path, time.ctime(os.path.getmtime(ls[i]))) # constructing the file obj with its name, path and date time
 				self.__fsTree.add(obj)
 
 
 		for i in range(len(ls)): # if not a file then go into the sub folder using recursive calls
-			if isdir(path + ls[i]): 
+			if isdir(ls[i]): 
 				self.__check(ls[i], path) 
 		
 		chdir("..") # end of each instance of the function you cd .. out of the folder you were in
