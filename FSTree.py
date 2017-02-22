@@ -24,36 +24,38 @@ class Tree():
 		return: a boolean on success or failure
 	'''
 	def add(self, fileObj):	
+		# if no subfolders, then it must be in the root directory
 		if (not fileObj.getDir or fileObj.getDir == "")  and fileObj:
 			self.__root["ROOT"].append(fileObj)
+		# else it has a subfolder and depending on the subfolders we loop!
 		elif fileObj.getDir:
 			numberOfFolders = 0
 			for i in range(len(fileObj.getDir)):
-				if ((fileObj.getDir)[i] == "/"):
-					numberOfFolders += 1
-			index = 0
-			cd = self.__root["ROOT"]
+				if ((fileObj.getDir)[i] == "/"): # depending on the forward slashes we know how many subfolders we neeed to visit
+					numberOfFolders += 1 
+			index = 0 # index to match with the forward slash
+			cd = self.__root["ROOT"] # lets start from our root node
 			while numberOfFolders != 0:
-				temp = ""
-				if (fileObj.getDir)[index] == "/":
+				temp = "" # empty string to hold each folder name
+				if (fileObj.getDir)[index] == "/": # this if statment prevents us from being trapped on forward slash forever
 					index += 1
-				while (fileObj.getDir)[index] != "/":
-					temp += (fileObj.getDir)[index]
-					index += 1
+				while (fileObj.getDir)[index] != "/": # while we are not encountering a forward slash keep looping forward
+					temp += (fileObj.getDir)[index] # and let temp absorb the chars of the dir
+					index += 1  # this is necessary to move forward to the next subfolder if any
 				flag = False
 				for i in range(len(cd)):
-					if isinstance(cd[i], dict):
-						for key, value in cd[i].items():
-							if temp == key:
-								flag = True
-								cd = cd[i][temp]
+					if isinstance(cd[i], dict): # for all the folders in that folder
+						for key, value in cd[i].items(): 
+							if temp == key: # if the folder with the name we are looking for exists
+								flag = True # this is important because by the end if we don't have the flag as True that means we need to create a new folder
+								cd = cd[i][temp] # then simply cd into the folder
 								break
-				if not flag:
-					cd.append(self.__tree())
+				if not flag: # so we check if a folder has been created or not 
+					cd.append(self.__tree()) # if not simply create the folder
 					cd[len(cd) - 1][temp] = []
 					cd = cd[len(cd) - 1][temp]
-				numberOfFolders -= 1 # folder done
-			if fileObj:
+				numberOfFolders -= 1 # decrement and move on to the new folder creation or check
+			if fileObj: # if a fileObj is provided then simply add the file to the folder
 				cd.append(fileObj)
 	'''
 		Name: find
@@ -92,7 +94,7 @@ class Tree():
 						for key, value in cd[i].items():
 							if temp == key:
 								cd = cd[i][temp]
-								flag = True
+								flag = True # found the following subfolder
 								innerFlag = True # changes made
 								break
 					if innerFlag == True: break # changes made
@@ -101,7 +103,7 @@ class Tree():
 				if not isinstance(cd[i], dict):
 					if cd[i].getName == fileObj.getName:
 						return cd[i]
-			if not flag:
+			if not flag: # failed to find the following file
 				return False
 	'''
 		Name: deleteFile
@@ -150,9 +152,9 @@ class Tree():
 						tempFile = cd[i]
 						del cd[i]
 						if len(cd) == 0: # prevents from having empty folders
-							self.deleteFolder(tempFile.getDir)
+							self.deleteFolder(tempFile.getDir) # self deletes empty folders
 						return True
-			if not flag or not flag2:
+			if not flag or not flag2: # failed to find the folder
 					return False
 	'''
 		Name: deleteFolder

@@ -22,27 +22,20 @@ class UnixClient():
 		output = proc.stdout.read()
 		output = output.decode("utf-8")
 		
-		if "FSTree.py" in output:
-			output = output.replace("FSTree.py\n", "")
-		if "File.py" in output:
-			output = output.replace("File.py\n", "")
-		if "UnixClient.py" in output:
-			output = output.replace("UnixClient.py\n", "")
-		if "UnixServer.py" in output:
-			output = output.replace("UnixServer.py\n", "")
-		if "__pycache__" in output:
-			output = output.replace("__pycache__\n", "")
+		if "FSTree.py" in output: output = output.replace("FSTree.py\n", "")
+		if "File.py" in output: output = output.replace("File.py\n", "")
+		if "UnixClient.py" in output: output = output.replace("UnixClient.py\n", "")
+		if "UnixServer.py" in output: output = output.replace("UnixServer.py\n", "")
+		if "__pycache__" in output: output = output.replace("__pycache__\n", "")
 
 		ls = output.split("\n")
 		
-		if "" in ls:
-			ls.remove("")
+		if "" in ls: ls.remove("")
 
 		for i in range(len(ls)):
 			if not isdir(ls[i]): # store all the files in the sub folder into an array as file objects
 				obj = File(ls[i], path, time.ctime(os.path.getmtime(ls[i]))) # constructing the file obj with its name, path and date time
 				self.__fsTree.add(obj)
-
 
 		for i in range(len(ls)): # if not a file then go into the sub folder using recursive calls
 			if isdir(ls[i]): 
