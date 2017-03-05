@@ -4,11 +4,13 @@
 			 in a file system.
 '''
 class File:
-	def __init__(self, name, directory, date, fId = None):
+	def __init__(self, name = None, directory = None, date = None, fId = None, folderId = None, extension = ""):
 		self.__name = name
 		self.__directory = directory
 		self.__date = date
 		self.__id = fId
+		self.__folderId = folderId
+		self.__mimeType = extension
 
 	def __repr__(self):
 		return self.getName
@@ -48,3 +50,11 @@ class File:
 	@property
 	def getFileId(self):
 		return self.__id
+
+	@property
+	def getFolderId(self):
+		return self.__folderId
+
+	@property
+	def getMimeType(self):
+		return self.__mimeType

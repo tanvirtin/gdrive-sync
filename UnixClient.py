@@ -1,20 +1,20 @@
 from FSTree import Tree
 from File import File
 import subprocess
-from os import chdir # for changing directory
-import os.path, time
-from os.path import isdir
+import os
+import time
+import mimetypes
 
 class UnixClient():
 	def __init__(self):
 		self.__fsTree = Tree()
 
-	def routineCheck(self):
+	def createTree(self):
 		self.__check(".", "./")
-		chdir("Main")
+		os.chdir("Main")
 
 	def __check(self, cwd, path):
-		chdir(cwd)
+		os.chdir(cwd)
 		# if cwd was root that means our path is ./
 		# so path += cwd + "/", if it was path would give you ./root/
 		# we don't want that and we want ./whateverisnext
@@ -36,14 +36,14 @@ class UnixClient():
 		if "" in ls: ls.remove("")
 
 		for i in range(len(ls)):
-			if isdir(ls[i]): # if not a file then go into the sub folder using recursive calls 
+			if os.path.isdir(ls[i]): # if not a file then go into the sub folder using recursive calls 
 				self.__check(ls[i], path) 
-				
-			if not isdir(ls[i]): # store all the files in the sub folder into an array as file objects
-				obj = File(ls[i], path, time.ctime(os.path.getmtime(ls[i]))) # constructing the file obj with its name, path and date time
+
+			if not os.path.isdir(ls[i]): # store all the files in the sub folder into an array as file objects
+				obj = File(ls[i], path, time.ctime(os.path.getmtime(ls[i])), None, None, mimetypes.guess_type(ls[i])[0]) # constructing the file obj with its name, path and date time
 				self.__fsTree.add(obj)
 		
-		chdir("..") # end of each instance of the function you cd .. out of the folder you were in
+		os.chdir("..") # end of each instance of the function you cd .. out of the folder you were in
 
 	def printFS(self):
 		self.__fsTree.print()
@@ -51,13 +51,6 @@ class UnixClient():
 	def findInFS(self, obj):
 		return self.__fsTree.find(obj)
 
+	def getFileList(self):
+		return self.__fsTree.listOfFiles
 
-def main():
-	client = UnixClient()
-	client.routineCheck()
-
-	client.printFS()
-
-
-if __name__ == '__main__':
-	main()
