@@ -4,10 +4,11 @@
 			 in a file system.
 '''
 class File:
-	def __init__(self, name, directory, date):
+	def __init__(self, name, directory, date, fId = None):
 		self.__name = name
 		self.__directory = directory
 		self.__date = date
+		self.__id = fId
 
 	def __repr__(self):
 		return self.getName
@@ -40,5 +41,10 @@ class File:
 		Purpose: Returns the full file address of a file object.
 		return: a string representing the full file details
 	'''
+
 	def getDetails(self):
 		return self.getDir + self.getName
+	
+	@property
+	def getFileId(self):
+		return self.__id
