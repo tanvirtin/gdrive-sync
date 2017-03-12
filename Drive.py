@@ -16,6 +16,7 @@ class GDrive():
 		self.__walkDrive("root", ".", "./", ".")
 
 	def __walkDrive(self, id, cwd, path, folderId):
+		print("Gathering Google Drive data...%s" %(path))
 		ls = self.__drive.ListFile({'q': "'%s' in parents and trashed=false" %(id)}).GetList()
 		# if cwd was root that means our path is ./
 		# so path += cwd + "/", if it was path would give you ./root/
@@ -140,4 +141,7 @@ class GDrive():
 	def houseKeeping(self):
 		self.__fCleanUp("root")
 
+	def deleteTree(self):
+		self.__gTree = None
+		self.__gTree = Tree()
 

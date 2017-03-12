@@ -9,6 +9,9 @@ class UnixClient():
 	def __init__(self):
 		self.__fsTree = Tree()
 
+	def copyTree(self, this): # can access private member of itself
+		self.__fsTree = this.__fsTree
+
 	def createTree(self):
 		self.__check(".", "./")
 		os.chdir("Main")
