@@ -12,10 +12,6 @@ class DriveControl:
 	def launch(self):
 		self.__populateFS()
 
-		hkThread = threading.Thread(target = self.__houseKeeping)
-		hkThread.daemon = True # terminates with the normal termination of program
-		hkThread.start()
-
 		while True:
 			self.__routineCheck()
 			time.sleep(10)
@@ -38,6 +34,10 @@ class DriveControl:
 		
 		print("Routine Check")
 
+		hkThread = threading.Thread(target = self.__houseKeeping)
+		hkThread.daemon = True # terminates with the normal termination of program
+		hkThread.start()
+		
 		tempFs = UnixClient()
 		tempFs.createTree()
 
@@ -69,8 +69,7 @@ class DriveControl:
 
 	# run this function every 5 minutes
 	def __houseKeeping(self):
-		while True:
-			print("House Keeping!")
-			self.__googleDrive.houseKeeping()
-			time.sleep(300)
+		print("House Keeping!")
+		self.__googleDrive.houseKeeping()
+		time.sleep(1)
 
