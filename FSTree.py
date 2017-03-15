@@ -16,6 +16,7 @@ class Tree():
 		self.__fileList = []
 
 	# repr method for debugging and printing
+	# you don't get one end line statement because it is probably a nested structure
 	def __repr__(self):
 		return "\n"
 	'''

@@ -138,8 +138,14 @@ class GDrive():
 				self.__fCleanUp(ls[i]["id"])
 
 
+	def getFileList(self):
+		return self.__gTree.listOfFiles
+
 	def houseKeeping(self):
 		self.__fCleanUp("root")
+
+	def findInDrive(self, obj):
+		return self.__gTree.find(obj)
 
 	def deleteTree(self):
 		self.__gTree = None

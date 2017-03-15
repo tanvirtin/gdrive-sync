@@ -5,8 +5,8 @@ import threading
 
 class DriveControl:
 	def __init__(self):
-		self.__googleDrive = GDrive()
-		self.__fileSystem = UnixClient()
+		self.__googleDrive = GDrive() # needed to keep track of what I am deleting and first launch
+		self.__fileSystem = UnixClient() 
 		self.__firstLaunch = True
 
 	def launch(self):
@@ -34,26 +34,40 @@ class DriveControl:
 		
 		print("Routine Check")
 
-		hkThread = threading.Thread(target = self.__houseKeeping)
+		hkThread = threading.Thread(target = self.__houseKeeping) # cleans up empty folders
 		hkThread.daemon = True # terminates with the normal termination of program
 		hkThread.start()
 		
 		tempFs = UnixClient()
 		tempFs.createTree()
 
-		prevFileList = self.__fileSystem.getFileList()
+		prevFileList = self.__fileSystem.getFileList() # prevFileList is also the file list that gets created for the very first time
 		
-		if self.__firstLaunch: # if its the first program launch then send everything
-		# modify later so that you sync it with your actual google drive
+		# sync done when initial load occurs
+		# next goal is to download what is on google drive but not your computer
+		
+		if self.__firstLaunch:
+			self.__googleDrive.createTree() # creates google drive	
+			gFiles = self.__googleDrive.getFileList()
+
+
 			for i in range(len(prevFileList)):
-				self.__upload(prevFileList[i])
+				# only upload files that are not currently present in google drive
+				if not self.__googleDrive.findInDrive(prevFileList[i]): # SO SLOW  OMG!!!
+					self.__upload(prevFileList[i])
+
+			# download the file which is on the google drive but not here
+			# don't delete files that are not here, that way you will be deleting anything
+			# that you upload using your phone or anything else automatically when this program starts
+			# running
+
 			self.__firstLaunch = False
 			return
 
 		currFileList = tempFs.getFileList() 
 
 		self.__googleDrive.deleteTree()
-		self.__googleDrive.createTree()
+		self.__googleDrive.createTree() # create it again
 
 		# get changes
 		for i in range(len(prevFileList)):
