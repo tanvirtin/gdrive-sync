@@ -54,6 +54,9 @@ class UnixClient():
 	def findInFS(self, obj):
 		return self.__fsTree.find(obj)
 
+	def addToFS(self, obj):
+		return self.__fsTree.add(obj)
+
 	def getFileList(self):
 		return self.__fsTree.listOfFiles
 

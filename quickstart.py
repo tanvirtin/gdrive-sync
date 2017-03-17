@@ -49,10 +49,11 @@ for file in file_list_two:
 # 	downloading a file
 
 # '''
-
-#file1 = drive.CreateFile({'id': '<some file ID here>'})
-# content = file7.GetContentFile()
-
+# # Initialize GoogleDriveFile instance with file id.
+# file6 = drive.CreateFile({'id': file5['id']})
+# file6.GetContentFile('catlove.png') # Download file as 'catlove.png'.
+# # the few lines above are enough for the module to automatically care the folder and write it to your drive
+# # no need to open a file and write bytes to it!
 # '''
 # 	deleting a file
 

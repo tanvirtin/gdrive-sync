@@ -118,8 +118,69 @@ class GDrive():
 				folder = self.__drive.CreateFile({"id": fileObj.getFolderId})
 				folder.Delete()
 			return True
-		else:
-			return False
+		else: return False
+
+	def downloadFile(self, obj):
+		print("Downloading %s...." %(obj.getName))
+		fileObj = self.__gTree.find(obj)
+		if fileObj:
+			path = fileObj.getDir
+			# walk to the file path and write the file
+			hops = self.__walkDirectory(fileObj.getDir, fileObj.getName, fileObj.getFileId, 0)
+			for i in range(hops):
+				os.chdir("..") # cds out the number of times it hoped into a directory
+
+		else: return False
+	
+	def __extractFolderName(self, path):
+		i = 0
+		folder = ""
+		while path[i] != "/": # encounters a / and returns
+			folder += path[i]
+			i += 1
+		path = path.replace(folder, "")
+		path = path[1:]
+		return (folder, path) # returns a folder and a path without the folder
+
+	def __walkDirectory(self, path, name, id, count): # tail recursion
+		print("Walking Path for downloads -> %s" %(path))
+
+		# needs to be checked first
+		if "." in path: # why is this a problem? because otherwise the first folder to look would be "." and we are currently inside .
+			path = path[2:] # removes both . and / "./"
+
+		# we are done set the contents now
+		if path == "":
+			try:
+				file = self.__drive.CreateFile({'id': id})
+				file.GetContentFile(name) 
+			except Exception as e:
+				print(e)
+			return count
+		
+		proc = subprocess.Popen("ls", stdout = subprocess.PIPE) 
+		output = proc.stdout.read() 
+		output = output.decode("utf-8") # system call std out is put inside a variable as a string format
+
+		ls = output.split("\n") # creates an array ouf ot the std out
+
+		if "" in ls: ls.remove("") # some string format to get the desired string output
+
+		tups = self.__extractFolderName(path)
+		
+		if tups[0] not in ls:
+			os.makedirs(tups[0]) # creates the directory if it doesn't exist
+			os.chdir(tups[0]) # equivalent to cd and hence should only take a folder name and not a path name
+			path = tups[1]
+			count += 1
+			return self.__walkDirectory(path, name, id, count) # cds into the drive
+
+		for i in range(len(ls)):
+			if os.path.isdir(ls[i]) and ls[i] == tups[0]: # check if the file is a dir and the option in the array is our folder
+				os.chdir(tups[0])
+				path = tups[1]
+				count += 1
+				return self.__walkDirectory(path, name, id, count)
 
 	def __fCleanUp(self, id):
 		ls = self.__drive.ListFile({'q': "'%s' in parents and trashed=false" %(id)}).GetList()
