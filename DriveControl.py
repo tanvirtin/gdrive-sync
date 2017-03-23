@@ -2,16 +2,57 @@ from Drive import GDrive
 from UnixClient import UnixClient
 import time
 import threading
+import socket
 
 class DriveControl:
 	def __init__(self):
-		self.__googleDrive = GDrive() # needed to keep track of what I am deleting and first launch
+		self.__lock = threading.Lock()
+		self.__connection = False
+		self.__checkConnection() # thread in the background which checks for connection
+		self.__initSystem() # initializes the system
+
+	# method that spawns a daemon thread which checks the connection continously
+	def __checkConnection(self):
+		conCheckThread = threading.Thread(target = self.__internetCheck) # cleans up empty folders
+		conCheckThread.daemon = True # terminates with the normal termination of program
+		conCheckThread.start()
+
+	# initiliazes the entire system
+	def __initSystem(self):
+		if not self.__connection: # if connection variable is false that means, no internet therefore sleep a second and call this function again to try and connect
+			print("Houston we have a problem...")
+			time.sleep(1)
+			return self.__initSystem() # needs to return this statement to prevent the stack from building up
+		self.__googleDrive = GDrive() # needed to keep track of what I am deleting and first launch, hence googleDrive data structure is required
 		self.__fileSystem = UnixClient() 
 
 	def launch(self):
 		self.__populateFS()
 		self.__initialize()
 		self.__routineCheck()
+
+	# function responsible for checking connection by pinging google every 3 seconds
+	# if a reply is found sleep for 3 seconds and then call the function again and check
+	# if not then catch the error by spawning the function again after 3 seconds of sleeping
+	# thread runs forever
+	def __internetCheck(self): # spawn a thread now that keeps on checking it constantly
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		try:
+			sock.connect(("www.google.com", 0))
+			sock.close()
+		except:
+			time.sleep(3)
+			print("Waiting for a connection...")
+			self.__lock.acquire()
+			self.__connection = False
+			self.__lock.release()
+			return self.__internetCheck()
+		self.__lock.acquire() # lock the thread while modding the value
+		self.__connection = True
+		self.__lock.release() # release the lock
+		time.sleep(3)
+		self.__internetCheck()
+
 
 	def __initialize(self):
 		# sync done when initial load occurs
@@ -50,7 +91,6 @@ class DriveControl:
 	def addToFS(self, obj):
 		return self.__fileSystem.addToFS(obj)
 
-
 	def __download(self, file):
 		self.__googleDrive.downloadFile(file)
 
@@ -60,6 +100,9 @@ class DriveControl:
 	def __routineCheck(self):
 		# FORGOT TO CHECK LAST MODIFIED
 		print("Routine Check")
+
+		while not self.__connection: # wait for connection to resume
+			time.sleep(1)
 
 		# house keeping thread
 		
