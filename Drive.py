@@ -5,11 +5,13 @@ from FSTree import Tree
 import subprocess
 import os
 import time
-import socket # to check connection
+import logging
 
 # https://accounts.google.com/o/oauth2/auth?client_id=854380500475-3qcvjb1ubskm8487d2c1528g3
 # mqnbcno.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F&scope=https%3
 # A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive&access_type=offline&response_type=code
+
+logging.basicConfig(level = logging.DEBUG)
 
 class GDrive():
 	def __init__(self):
@@ -22,7 +24,7 @@ class GDrive():
 		self.__walkDrive("root", ".", "./", ".")
 
 	def __walkDrive(self, id, cwd, path, folderId):
-		print("Gathering Google Drive data...%s" %(path))
+		logging.info("Gathering Google Drive data...%s" %(path))
 		try:
 			ls = self.__drive.ListFile({'q': "'%s' in parents and trashed=false" %(id)}).GetList()
 			# if cwd was root that means our path is ./
@@ -45,10 +47,7 @@ class GDrive():
 					obj = File(ls[i]["title"], path, ls[i]["modifiedDate"], ls[i]["id"], folderId, ls[i]["mimeType"])
 					self.__gTree.add(obj)
 		except:
-			print("Couldn't gather Google Drive information due to failure in connection...")
-
-	def printDrive(self):
-		self.__gTree.print()
+			logging.critical("Couldn't gather Google Drive information due to failure in connection...")
 
 	def findFile(self, fileObj):
 		return self.__gTree.find(fileObj)
@@ -107,7 +106,7 @@ class GDrive():
 
 		
 	def uploadFile(self, obj):
-		print("Uploading %s...." %(obj.getName))
+		logging.info("Uploading %s...." %(obj.getName))
 		id = self.__ccFolder(obj.getDir) # creates the folders necessary
 		gfile = self.__drive.CreateFile({'title': obj.getName, "parents":  [{"kind": "drive#fileLink","id": id}]})
 		hops = self.__walkFS(obj.getDir) # walks inside the folder of the file
@@ -117,7 +116,7 @@ class GDrive():
 			os.chdir("..")
 		
 	def deleteFile(self, obj):
-		print("Deleting %s...." %(obj.getName))
+		logging.info("Deleting %s...." %(obj.getName))
 		fileObj = self.__gTree.find(obj)
 		if fileObj:
 			file = self.__drive.CreateFile({"id": fileObj.getFileId})
@@ -130,7 +129,7 @@ class GDrive():
 		else: return False
 
 	def downloadFile(self, obj):
-		print("Downloading %s...." %(obj.getName))
+		logging.info("Downloading %s...." %(obj.getName))
 		fileObj = self.__gTree.find(obj)
 		if fileObj:
 			path = fileObj.getDir
@@ -152,7 +151,7 @@ class GDrive():
 		return (folder, path) # returns a folder and a path without the folder
 
 	def __walkDirectory(self, path, name, id, count): # tail recursion
-		print("Walking Path for downloads -> %s" %(path))
+		logging.info("Walking Path for downloads -> %s" %(path))
 
 		# needs to be checked first
 		if "." in path: # why is this a problem? because otherwise the first folder to look would be "." and we are currently inside .
@@ -164,7 +163,7 @@ class GDrive():
 				file = self.__drive.CreateFile({'id': id})
 				file.GetContentFile(name) 
 			except Exception as e:
-				print(e)
+				logging.critical(e)
 			return count
 		
 		proc = subprocess.Popen("ls", stdout = subprocess.PIPE) 
@@ -208,7 +207,7 @@ class GDrive():
 				if ls[i]["mimeType"] == "application/vnd.google-apps.folder":
 					self.__fCleanUp(ls[i]["id"])
 		except:
-			print("Failure in cleaning up due to no connectivitiy...")
+			logging.critical("Failure in cleaning up due to no connectivitiy...")
 
 	def getFileList(self):
 		return self.__gTree.listOfFiles

@@ -60,3 +60,7 @@ class UnixClient():
 	def getFileList(self):
 		return self.__fsTree.listOfFiles
 
+	def deleteTree(self):
+		self.__fsTree = None
+		self.__fsTree = Tree()
+

@@ -104,7 +104,7 @@ class Tree():
 			cd = self.__traverse(fileObj)
 			for i in range(len(cd)):
 				if not isinstance(cd[i], dict):
-					if cd[i].getName == fileObj.getName:
+					if cd[i].getName == fileObj.getName and cd[i].getDir == fileObj.getDir: # change made
 						return cd[i]
 			if not flag: # failed to find the following file
 				return False
@@ -130,7 +130,7 @@ class Tree():
 			for i in range(len(cd)):
 				flag2 = False
 				if not isinstance(cd[i], dict):
-					if cd[i].getName == fileObj.getName:
+					if cd[i].getName == fileObj.getName and cd[i].getDir == fileObj.getDir: # changees made
 						flag2 = True
 						tempFile = cd[i]
 						del cd[i]

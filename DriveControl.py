@@ -3,11 +3,19 @@ from UnixClient import UnixClient
 import time
 import threading
 import socket
+import logging
+import os
+
+logging.basicConfig(level = logging.DEBUG) # debug level highest level of logging, can log everything
 
 class DriveControl:
 	def __init__(self):
+		self.__initialStart = True # constructing the object will make the initialStart True by default
 		self.__lock = threading.Lock()
 		self.__connection = False
+		self.__googleDrive = None
+		self.__fileSystem = None
+		self.__justDownloaded = [] # list keeps track of recent downloads
 		self.__checkConnection() # thread in the background which checks for connection
 		self.__initSystem() # initializes the system
 
@@ -20,7 +28,7 @@ class DriveControl:
 	# initiliazes the entire system
 	def __initSystem(self):
 		if not self.__connection: # if connection variable is false that means, no internet therefore sleep a second and call this function again to try and connect
-			print("Houston we have a problem...")
+			logging.info("Houston we have a problem...")
 			time.sleep(1)
 			return self.__initSystem() # needs to return this statement to prevent the stack from building up
 		self.__googleDrive = GDrive() # needed to keep track of what I am deleting and first launch, hence googleDrive data structure is required
@@ -39,21 +47,22 @@ class DriveControl:
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		try:
 			sock.connect(("www.google.com", 0))
-			sock.close()
 		except:
 			time.sleep(3)
-			print("Waiting for a connection...")
+			logging.info("Waiting for a connection...")
 			self.__lock.acquire()
 			self.__connection = False
 			self.__lock.release()
-			return self.__internetCheck()
+			return self.__internetCheck() # ends function here		
+		finally: # we want to close the socket regardless of whether we catch an error or not!
+			sock.close()
 		self.__lock.acquire() # lock the thread while modding the value
 		self.__connection = True
 		self.__lock.release() # release the lock
 		time.sleep(3)
-		self.__internetCheck()
+		return self.__internetCheck() # even though this statement is the last thing to be executed call return to prevent stack from building up # ends function here
 
-
+	# intial start was here causing an issue as I had routine check only running if initialStart was False
 	def __initialize(self):
 		# sync done when initial load occurs
 		# next goal is to download what is on google drive but not your computer
@@ -97,15 +106,43 @@ class DriveControl:
 	def __delete(self, file):
 		self.__googleDrive.deleteFile(file)
 
+	def __update(self, oldFile, newFile):
+		# need to check whether the file where changes are made is one of the scripting files
+		forbidden = ["Drive.py", "DriveControl.py", "FSTree.py", "File.py", "UnixClient.py", "client_secrets.json", "fsGenerator.py", "quickstart.py", "__main__.py"]
+		if newFile.getName not in forbidden: # newFile or oldFile doesn't matter both have the same name
+			logging.info("\nUpdating changes...\n")
+			self.__googleDrive.deleteFile(oldFile) # deletes old file
+			self.__googleDrive.uploadFile(newFile) # uploads new modified file
+
+	def __justDownloadChecker(self, file):
+		for i in range(len(self.__justDownloaded)):
+			if file.getName == self.__justDownloaded[i].getName:
+				return True # return true immedietly and exit function if names match
+		return False # return False after iteration
+
+	# problem finding the file last modified between googleDrive file and currentFile systems file
+	def __updateSystem(self):
+		tempFs = UnixClient()
+		tempFs.createTree()
+
+		currFileList = tempFs.getFileList() 
+
+		for i in range(len(currFileList)):
+			newFile = currFileList[i] # current files in the file system
+			oldFile = self.__fileSystem.findInFS(newFile) # old files in google drive
+			if oldFile: # If the oldFile with the same name and directory exists in the current FS, then compare last modified dates of the newFile in the current FS
+				if oldFile.getLastModified != newFile.getLastModified and not self.__justDownloadChecker(oldFile): # checks differences in last modified date and whether the file was just downloaded or not
+					self.__update(oldFile, newFile) # update the file then
+		self.__justDownloaded = [] # reset just downloaded so that it doesn't check again
+
 	def __routineCheck(self):
 		# FORGOT TO CHECK LAST MODIFIED
-		print("Routine Check")
+		logging.info("Routine Check")
 
 		while not self.__connection: # wait for connection to resume
 			time.sleep(1)
 
 		# house keeping thread
-		
 		hkThread = threading.Thread(target = self.__houseKeeping) # cleans up empty folders
 		hkThread.daemon = True # terminates with the normal termination of program
 		hkThread.start()
@@ -114,31 +151,56 @@ class DriveControl:
 		tempFs.createTree()
 
 		prevFileList = self.__fileSystem.getFileList() # prevFileList is also the file list that gets created for the very first time
-		
 		currFileList = tempFs.getFileList() 
 
 		self.__googleDrive.deleteTree()
 		self.__googleDrive.createTree() # create it again
 
-		# get changes
+		gFiles = self.__googleDrive.getFileList()
+
+		logging.info("\nStarting checks!\n")
+
+		# deletes whats not there in google drive
+		logging.info("\nChecking for deletes....\n")	
 		for i in range(len(prevFileList)):
 			if not tempFs.findInFS(prevFileList[i]):
 				self.__delete(prevFileList[i]) # if previous files don't exist in the new tree generated then delete the old ones
-	
-		for i in range(len(currFileList)):
+				size = len(gFiles)
+				j = 0 # needs a new variable j because i is currently in this for loop which is being used by to find the index of prevFileList at i
+				while j != size:
+					if gFiles[j].getName == prevFileList[i].getName:
+						del gFiles[j]
+						size -= 1
+					j += 1 # increase j as it has to match size in order to break the loop
+
+		# uploads whats not there in google drive
+		logging.info("\nChecking for uploads....\n")			
+		for i in range(len(currFileList)):		
 			if not self.__fileSystem.findInFS(currFileList[i]):
 				self.__upload(currFileList[i]) # if previous files don't exist in the new tree generated then delete the old ones
+		
+		# update changes
+		logging.info("\nChecking for updates....\n") 
+		if not self.__initialStart: # first call to this function will always make initialStart = True 
+			self.__updateSystem() # changes made
+
+		# download whats not there in file system
+		logging.info("\nChecking for downloads....\n")		
+		for i in range(len(gFiles)):			
+			if not tempFs.findInFS(gFiles[i]):
+				self.__download(gFiles[i])		
+				tempFs.addToFS(gFiles[i]) # add new file to fs data structure		
+				self.__justDownloaded.append(gFiles[i])
 
 		self.__fileSystem.copyTree(tempFs)
-
+		self.__initialStart = False # initialStart is made False everytime
 		time.sleep(10)
-
 		self.__routineCheck() # run forever
 
 
 	# run this function every 5 minutes
 	def __houseKeeping(self):
-		print("House Keeping!")
+		logging.info("House Keeping!")
 		self.__googleDrive.houseKeeping()
 		time.sleep(1)
 
