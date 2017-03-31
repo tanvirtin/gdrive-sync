@@ -18,6 +18,8 @@ class DriveControl:
 		self.__justDownloaded = [] # list keeps track of recent downloads
 		self.__checkConnection() # thread in the background which checks for connection
 		self.__initSystem() # initializes the system
+		self.__forbidden = ["Drive.py", "DriveControl.py", "FSTree.py", "File.py", "UnixClient.py", "client_secrets.json", "fsGenerator.py", "quickstart.py", "__main__.py"]
+
 
 	# method that spawns a daemon thread which checks the connection continously
 	def __checkConnection(self):
@@ -32,7 +34,7 @@ class DriveControl:
 			time.sleep(1)
 			return self.__initSystem() # needs to return this statement to prevent the stack from building up
 		self.__googleDrive = GDrive() # needed to keep track of what I am deleting and first launch, hence googleDrive data structure is required
-		self.__fileSystem = UnixClient() 
+		self.__fileSystem = UnixClient()
 
 	def launch(self):
 		self.__populateFS()
@@ -53,7 +55,7 @@ class DriveControl:
 			self.__lock.acquire()
 			self.__connection = False
 			self.__lock.release()
-			return self.__internetCheck() # ends function here		
+			return self.__internetCheck() # ends function here
 		finally: # we want to close the socket regardless of whether we catch an error or not!
 			sock.close()
 		self.__lock.acquire() # lock the thread while modding the value
@@ -66,10 +68,10 @@ class DriveControl:
 	def __initialize(self):
 		# sync done when initial load occurs
 		# next goal is to download what is on google drive but not your computer
-		self.__googleDrive.createTree() # creates google drive	
+		self.__googleDrive.createTree() # creates google drive
 		gFiles = self.__googleDrive.getFileList()
-		FsFileList = self.__fileSystem.getFileList() # prevFileList is also the file list that gets created for the very first time
-	
+		fsFileList = self.__fileSystem.getFileList() # prevFileList is also the file list that gets created for the very first time
+
 		# downloads the file (SOME FILES DONT GET DOWNLOADED FIX!!!)
 		# after downloading I have to make sure that the FsFileList gets updated again and
 		# filled with new files if not then whatever you download will get uploaded again
@@ -77,39 +79,38 @@ class DriveControl:
 			if not self.__fileSystem.findInFS(gFiles[i]): # if one of the google file is not found in the file system then download it
 				self.__download(gFiles[i])
 				self.addToFS(gFiles[i]) # updates the file system
-
-		# uploads the file
-		for i in range(len(FsFileList)):
-			# only upload files that are not currently present in google drive
-			if not self.__googleDrive.findInDrive(FsFileList[i]): # SO SLOW  OMG!!!
-				self.__upload(FsFileList[i])
-
-		# download the file which is on the google drive but not here
-		# don't delete files that are not here when you first start up, 
-		# because if you do you will be deleting anything that you upload using your phone 
-		# or any other device automatically when this program starts running
+		# delete files that are here but not in google drive, this makes sure that if a new user logs only the new
+		# user files is shown and nothing else
+		for i in range(len(fsFileList)):
+			if not self.__googleDrive.findInDrive(fsFileList[i]):
+				self.__deleteFromFs(fsFileList[i]) # deletes from google drive needs to delete from file system
+				self.__fileSystem.deleteFileInTree(fsFileList[i])
 
 	def __populateFS(self):
 		self.__fileSystem.createTree()
 
 	def __upload(self, file):
-		forbidden = ["Drive.py", "DriveControl.py", "FSTree.py", "File.py", "UnixClient.py", "client_secrets.json", "fsGenerator.py", "quickstart.py", "__main__.py"]
-		if file.getName not in forbidden:
+		if file.getName not in self.__forbidden:
 			self.__googleDrive.uploadFile(file)
 
 	def addToFS(self, obj):
 		return self.__fileSystem.addToFS(obj)
 
 	def __download(self, file):
-		self.__googleDrive.downloadFile(file)
+		if file.getName not in self.__forbidden:
+			self.__googleDrive.downloadFile(file)
 
 	def __delete(self, file):
-		self.__googleDrive.deleteFile(file)
+		if file.getName not in self.__forbidden:
+			self.__googleDrive.deleteFile(file)
+
+	def __deleteFromFs(self, file):
+		if file.getName not in self.__forbidden:
+			self.__fileSystem.deleteFileInFs(file)
 
 	def __update(self, oldFile, newFile):
 		# need to check whether the file where changes are made is one of the scripting files
-		forbidden = ["Drive.py", "DriveControl.py", "FSTree.py", "File.py", "UnixClient.py", "client_secrets.json", "fsGenerator.py", "quickstart.py", "__main__.py"]
-		if newFile.getName not in forbidden: # newFile or oldFile doesn't matter both have the same name
+		if newFile.getName not in self.__forbidden: # newFile or oldFile doesn't matter both have the same name
 			logging.info("\nUpdating changes...\n")
 			self.__googleDrive.deleteFile(oldFile) # deletes old file
 			self.__googleDrive.uploadFile(newFile) # uploads new modified file
@@ -125,7 +126,7 @@ class DriveControl:
 		tempFs = UnixClient()
 		tempFs.createTree()
 
-		currFileList = tempFs.getFileList() 
+		currFileList = tempFs.getFileList()
 
 		for i in range(len(currFileList)):
 			newFile = currFileList[i] # current files in the file system
@@ -146,12 +147,12 @@ class DriveControl:
 		hkThread = threading.Thread(target = self.__houseKeeping) # cleans up empty folders
 		hkThread.daemon = True # terminates with the normal termination of program
 		hkThread.start()
-		
+
 		tempFs = UnixClient()
 		tempFs.createTree()
 
 		prevFileList = self.__fileSystem.getFileList() # prevFileList is also the file list that gets created for the very first time
-		currFileList = tempFs.getFileList() 
+		currFileList = tempFs.getFileList()
 
 		self.__googleDrive.deleteTree()
 		self.__googleDrive.createTree() # create it again
@@ -161,7 +162,7 @@ class DriveControl:
 		logging.info("\nStarting checks!\n")
 
 		# deletes whats not there in google drive
-		logging.info("\nChecking for deletes....\n")	
+		logging.info("\nChecking for deletes....\n")
 		for i in range(len(prevFileList)):
 			if not tempFs.findInFS(prevFileList[i]):
 				self.__delete(prevFileList[i]) # if previous files don't exist in the new tree generated then delete the old ones
@@ -174,22 +175,22 @@ class DriveControl:
 					j += 1 # increase j as it has to match size in order to break the loop
 
 		# uploads whats not there in google drive
-		logging.info("\nChecking for uploads....\n")			
-		for i in range(len(currFileList)):		
+		logging.info("\nChecking for uploads....\n")
+		for i in range(len(currFileList)):
 			if not self.__fileSystem.findInFS(currFileList[i]):
 				self.__upload(currFileList[i]) # if previous files don't exist in the new tree generated then delete the old ones
-		
+
 		# update changes
-		logging.info("\nChecking for updates....\n") 
-		if not self.__initialStart: # first call to this function will always make initialStart = True 
+		logging.info("\nChecking for updates....\n")
+		if not self.__initialStart: # first call to this function will always make initialStart = True
 			self.__updateSystem() # changes made
 
 		# download whats not there in file system
-		logging.info("\nChecking for downloads....\n")		
-		for i in range(len(gFiles)):			
+		logging.info("\nChecking for downloads....\n")
+		for i in range(len(gFiles)):
 			if not tempFs.findInFS(gFiles[i]):
-				self.__download(gFiles[i])		
-				tempFs.addToFS(gFiles[i]) # add new file to fs data structure		
+				self.__download(gFiles[i])
+				tempFs.addToFS(gFiles[i]) # add new file to fs data structure
 				self.__justDownloaded.append(gFiles[i])
 
 		self.__fileSystem.copyTree(tempFs)
@@ -203,4 +204,3 @@ class DriveControl:
 		logging.info("House Keeping!")
 		self.__googleDrive.houseKeeping()
 		time.sleep(1)
-

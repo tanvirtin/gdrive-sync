@@ -41,33 +41,33 @@ class Tree():
 		numberOfFolders = 0
 		for i in range(len(fileObj.getDir)):
 			if ((fileObj.getDir)[i] == "/"):
-				numberOfFolders += 1 
+				numberOfFolders += 1
 		index = 0 # index to match with the forward slash
 		cd = self.__root["ROOT"] # lets start from our root node
 		while numberOfFolders != 0:
-			innerFlag = False 
-			temp = "" 
-			if (fileObj.getDir)[index] == "/": 
+			innerFlag = False
+			temp = ""
+			if (fileObj.getDir)[index] == "/":
 				index += 1
-			while (fileObj.getDir)[index] != "/": 
-				temp += (fileObj.getDir)[index] 
+			while (fileObj.getDir)[index] != "/":
+				temp += (fileObj.getDir)[index]
 				index += 1  # this is necessary to move forward to the next subfolder if any
 			flag = False
 			for i in range(len(cd)):
 				if isinstance(cd[i], dict): # for all the folders in that folder
-					for key, value in cd[i].items(): 
-						if temp == key: 
+					for key, value in cd[i].items():
+						if temp == key:
 							flag = True
 							innerFlag = True
 							cd = cd[i][temp]
 							break
 				if innerFlag == True: break # breaks the loop and goes into a new instance
-			if not flag: 
+			if not flag:
 				cd.append(self.__tree()) # if not simply create the folder
 				cd[len(cd) - 1][temp] = []
 				cd = cd[len(cd) - 1][temp]
-			numberOfFolders -= 1 
-		return cd 
+			numberOfFolders -= 1
+		return cd
 
 	'''
 		Name: add
@@ -75,7 +75,7 @@ class Tree():
 		in: fileObj
 		return: a boolean on success or failure
 	'''
-	def add(self, fileObj):	
+	def add(self, fileObj):
 		# if no subfolders, then it must be in the root directory
 		if (not fileObj.getDir or fileObj.getDir == "")  and fileObj:
 			self.__root["ROOT"].append(fileObj)
@@ -90,7 +90,7 @@ class Tree():
 		Purpose: Finds the file object thats provided through the parameter.
 		in: fileObj
 		return: false upon failure and file object upon success
-	'''		
+	'''
 	def find(self, fileObj):
 		flag = False
 		if not fileObj.getDir or fileObj.getDir == "":
@@ -171,7 +171,7 @@ class Tree():
 								return True
 							cd = cd[i][temp]
 							flag = True
-							break
+							return True
 		if not flag:
 			return flag
 	'''
