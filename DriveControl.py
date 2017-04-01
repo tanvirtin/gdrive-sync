@@ -148,8 +148,6 @@ class DriveControl:
 		hkThread.daemon = True # terminates with the normal termination of program
 		hkThread.start()
 
-		self.__fileSystem.houseKeeping() # deletes empty folders in file system		
-
 		tempFs = UnixClient()
 		tempFs.createTree()
 
@@ -204,6 +202,9 @@ class DriveControl:
 				self.__justDownloaded.append(gFiles[i])
 
 		self.__fileSystem.copyTree(tempFs)
+
+		self.__fileSystem.houseKeeping() # deletes empty folders in file system
+
 		self.__initialStart = False # initialStart is made False everytime
 		time.sleep(10)
 		self.__routineCheck() # run forever
