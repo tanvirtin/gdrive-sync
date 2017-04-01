@@ -121,7 +121,7 @@ class Tree():
 			cd = self.__root["ROOT"]
 			for i in range(len(cd)):
 				if not isinstance(cd[i], dict):
-					if cd[i].getName == fileObj.getName:
+					if cd[i].getName == fileObj.getName and cd[i].getDir == fileObj.getDir:
 						del cd[i]
 						return True
 			return flag
@@ -130,7 +130,7 @@ class Tree():
 			for i in range(len(cd)):
 				flag2 = False
 				if not isinstance(cd[i], dict):
-					if cd[i].getName == fileObj.getName and cd[i].getDir == fileObj.getDir: # changees made
+					if cd[i].getName == fileObj.getName and cd[i].getDir == fileObj.getDir: # changes made
 						flag2 = True
 						tempFile = cd[i]
 						del cd[i]
@@ -139,6 +139,14 @@ class Tree():
 						return True
 			if not flag or not flag2: # failed to find the folder
 					return False
+
+	def deleteFileInList(self, fileObj):
+		for i in range(len(self.__fileList)):
+			if fileObj.getName == self.__fileList[i].getName and fileObj.getDir == self.__fileList[i].getDir:
+				del self.__fileList[i]
+				return True
+		return False
+
 	'''
 		Name: deleteFolder
 		Purpose: Finds folder provided and removes it from the tree.
@@ -175,8 +183,8 @@ class Tree():
 		if not flag:
 			return flag
 	'''
-		Name: print
+		Name: printTree
 		Purpose: a simple method for displaying the tree
 	'''
-	def print(self):
+	def printTree(self):
 		print(self.__root)

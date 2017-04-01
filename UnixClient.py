@@ -147,10 +147,13 @@ class UnixClient():
 		return self.__fCleanUp(".") # start traversing from the root directory
 
 	def deleteFileInTree(self, file):
-		self.__fsTree.deleteFile(file)
+		return self.__fsTree.deleteFile(file)
+
+	def deleteFileInList(self, file):
+		return self.__fsTree.deleteFileInList(file)
 
 	def printFS(self):
-		self.__fsTree.print()
+		self.__fsTree.printTree()
 
 	def findInFS(self, obj):
 		return self.__fsTree.find(obj)

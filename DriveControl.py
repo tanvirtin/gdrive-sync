@@ -81,10 +81,15 @@ class DriveControl:
 				self.__addToFS(gFiles[i]) # updates the file system
 		# delete files that are here but not in google drive, this makes sure that if a new user logs only the new
 		# user files is shown and nothing else
+		toBeDeleted = []
 		for i in range(len(fsFileList)):
 			if not self.__googleDrive.findInDrive(fsFileList[i]):
 				self.__deleteFromFs(fsFileList[i]) # deletes from google drive needs to delete from file system
 				self.__fileSystem.deleteFileInTree(fsFileList[i])
+
+		for i in range(len(toBeDeleted)):
+			self.__fileSystem.deleteFileInList(toBeDeleted[i])
+
 
 	def __populateFS(self):
 		self.__fileSystem.createTree()
@@ -163,14 +168,6 @@ class DriveControl:
 
 		logging.info("\nStarting checks!\n")
 
-		# delete files that are here but not in google drive, this makes sure that if a new user logs only the new
-		# user files is shown and nothing else
-		logging.info("\nChecking for deletes in File System....\n")
-		for i in range(len(prevFileList)):
-			if not self.__googleDrive.findInDrive(prevFileList[i]):
-				self.__deleteFromFs(prevFileList[i]) # deletes from google drive needs to delete from file system
-				tempFs.deleteFileInTree(prevFileList[i])
-
 		# deletes whats not there in google drive
 		logging.info("\nChecking for deletes in Google Drive....\n")
 		for i in range(len(prevFileList)):
@@ -202,6 +199,19 @@ class DriveControl:
 				self.__download(gFiles[i])
 				tempFs.addToFS(gFiles[i]) # add new file to fs data structure
 				self.__justDownloaded.append(gFiles[i])
+
+		# delete files that are here but not in google drive, this makes sure that if a new user logs only the new
+		# user files is shown and nothing else
+		toBeDeleted = []
+		logging.info("\nChecking for deletes in File System....\n")
+		for i in range(len(currFileList)):
+			if prevFileList[i].getName not in self.__forbidden and not self.__googleDrive.findInDrive(prevFileList[i]): # if the file isn't in the forbidden list and can't find it in google drive then proceed
+				self.__deleteFromFs(prevFileList[i]) # deletes from google drive needs to delete from file system
+				tempFs.deleteFileInTree(prevFileList[i])
+				toBeDeleted.append(prevFileList[i])
+
+		for i in range(len(toBeDeleted)):
+			tempFs.deleteFileInList(toBeDeleted[i])
 
 		self.__fileSystem.copyTree(tempFs)
 		self.__initialStart = False # initialStart is made False everytime
