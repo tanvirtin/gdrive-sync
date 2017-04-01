@@ -78,7 +78,7 @@ class DriveControl:
 		for i in range(len(gFiles)):
 			if not self.__fileSystem.findInFS(gFiles[i]): # if one of the google file is not found in the file system then download it
 				self.__download(gFiles[i])
-				self.addToFS(gFiles[i]) # updates the file system
+				self.__addToFS(gFiles[i]) # updates the file system
 		# delete files that are here but not in google drive, this makes sure that if a new user logs only the new
 		# user files is shown and nothing else
 		for i in range(len(fsFileList)):
@@ -93,7 +93,7 @@ class DriveControl:
 		if file.getName not in self.__forbidden:
 			self.__googleDrive.uploadFile(file)
 
-	def addToFS(self, obj):
+	def __addToFS(self, obj): # changed one thing here if something doesn't work look back
 		return self.__fileSystem.addToFS(obj)
 
 	def __download(self, file):
@@ -148,6 +148,8 @@ class DriveControl:
 		hkThread.daemon = True # terminates with the normal termination of program
 		hkThread.start()
 
+		self.__fileSystem.houseKeeping() # deletes empty folders in file system		
+
 		tempFs = UnixClient()
 		tempFs.createTree()
 
@@ -161,8 +163,16 @@ class DriveControl:
 
 		logging.info("\nStarting checks!\n")
 
+		# delete files that are here but not in google drive, this makes sure that if a new user logs only the new
+		# user files is shown and nothing else
+		logging.info("\nChecking for deletes in File System....\n")
+		for i in range(len(prevFileList)):
+			if not self.__googleDrive.findInDrive(prevFileList[i]):
+				self.__deleteFromFs(prevFileList[i]) # deletes from google drive needs to delete from file system
+				self.__fileSystem.deleteFileInTree(prevFileList[i])
+
 		# deletes whats not there in google drive
-		logging.info("\nChecking for deletes....\n")
+		logging.info("\nChecking for deletes in Google Drive....\n")
 		for i in range(len(prevFileList)):
 			if not tempFs.findInFS(prevFileList[i]):
 				self.__delete(prevFileList[i]) # if previous files don't exist in the new tree generated then delete the old ones

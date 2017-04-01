@@ -97,7 +97,7 @@ class UnixClient():
 				emptyFolder = self.__deleteEmptyFolder() # gets name of the current folder
 				os.chdir("..") # need to actually cd out of the current folder to delete the folder itself
 				if emptyFolder != "":
-					os.system("rmdir " + emptyFolder) # now deletes the folder
+					os.removedirs(emptyFolder) # now deletes the folder
 			return # if return is not there then the function will execute rest of the body which will result in an error
 
 		addr = self.__extractFolder(path)
@@ -114,6 +114,37 @@ class UnixClient():
 			i += 1
 		path = path[i + 1:] # path excluding the "/"
 		return (folder, path) # returns a tuple containing folder name and new path
+
+
+
+	def __fCleanUp(self, cwd):
+		isEmpty = False # defines a variable which is an indicator if the folder is empty of not
+		if cwd != ".": # first time when this function gets called the path will be "." so we dont have to change directory to "." as we already will be in it
+			os.chdir(cwd)
+
+		# create the list of files and directories
+		# ------------------------
+		proc = subprocess.Popen("ls", stdout = subprocess.PIPE)
+		output = proc.stdout.read()
+		output = output.decode("utf-8")
+		ls = output.split("\n") # creates an array out of std out
+		if "" in ls: ls.remove("")
+		# -------------------------
+		for i in range(len(ls)):
+			if os.path.isdir(ls[i]):
+				self.__fCleanUp(ls[i]) # can't return the function as we need to grow the stack as there is instructions pending after the recursive call in that particular instance of the recursive call
+
+		# we also got to make sure that the current directory is not root because we do not want to cd out of root
+		if cwd != ".":
+			# when loop ends we successfully traversed all the necessary folders, so cd out of the current directory
+			os.chdir("..") # before the stack collapses it cds out of the current directory that it cded into in that particular instance of the recursive call
+
+		if ls == []: # if ls is empty, it means that the folder is empty, if it is then delete the folder
+			logging.info("Deleting empty folder from file system...")
+			os.removedirs(cwd)
+
+	def houseKeeping(self):
+		return self.__fCleanUp(".") # start traversing from the root directory
 
 	def deleteFileInTree(self, file):
 		self.__fsTree.deleteFile(file)
