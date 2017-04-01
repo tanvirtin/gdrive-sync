@@ -81,8 +81,11 @@ class DriveControl:
 				self.__addToFS(gFiles[i]) # updates the file system
 		# delete files that are here but not in google drive, this makes sure that if a new user logs only the new
 		# user files is shown and nothing else
-		toBeDeleted = []
-		for i in range(len(fsFileList)):
+
+		toBeDeleted = [] # a list to keep track of the files that need to be deleted from the list
+		for i in range(len(fsFileList)): # As we are in the loop and the range of i is set, we will run into an index out of bounds error when one of the elements
+		# pointed to a memory location gets deleted, naturally the fsFileList's size will decrease as one of the elements is removed, but the range is set before entering
+		# the loop and cannot be changed. Therefore you get an index out of bounds error. To solve that a temporary toBeDeleted list is kept which I loop through to delete files from the file list
 			if not self.__googleDrive.findInDrive(fsFileList[i]):
 				self.__deleteFromFs(fsFileList[i]) # deletes from google drive needs to delete from file system
 				self.__fileSystem.deleteFileInTree(fsFileList[i])
@@ -142,7 +145,6 @@ class DriveControl:
 		self.__justDownloaded = [] # reset just downloaded so that it doesn't check again
 
 	def __routineCheck(self):
-		# FORGOT TO CHECK LAST MODIFIED
 		logging.info("Routine Check")
 
 		while not self.__connection: # wait for connection to resume
@@ -210,6 +212,8 @@ class DriveControl:
 				tempFs.deleteFileInTree(prevFileList[i])
 				toBeDeleted.append(prevFileList[i])
 
+		# same method applied as before, although a while loop can also be used here to remedy the situation
+		# efficiency is debatable as the while loop would call the len() function in each loop which would cost a lot of time in my opinion
 		for i in range(len(toBeDeleted)):
 			tempFs.deleteFileInList(toBeDeleted[i])
 
