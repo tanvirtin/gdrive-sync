@@ -169,7 +169,7 @@ class DriveControl:
 		for i in range(len(prevFileList)):
 			if not self.__googleDrive.findInDrive(prevFileList[i]):
 				self.__deleteFromFs(prevFileList[i]) # deletes from google drive needs to delete from file system
-				self.__tempFs.deleteFileInTree(prevFileList[i])
+				tempFs.deleteFileInTree(prevFileList[i])
 
 		# deletes whats not there in google drive
 		logging.info("\nChecking for deletes in Google Drive....\n")
