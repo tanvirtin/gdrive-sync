@@ -148,6 +148,8 @@ class DriveControl:
 		hkThread.daemon = True # terminates with the normal termination of program
 		hkThread.start()
 
+		self.__fileSystem.houseKeeping() # deletes empty folders in file system
+
 		tempFs = UnixClient()
 		tempFs.createTree()
 
@@ -167,7 +169,7 @@ class DriveControl:
 		for i in range(len(prevFileList)):
 			if not self.__googleDrive.findInDrive(prevFileList[i]):
 				self.__deleteFromFs(prevFileList[i]) # deletes from google drive needs to delete from file system
-				self.__fileSystem.deleteFileInTree(prevFileList[i])
+				self.__tempFs.deleteFileInTree(prevFileList[i])
 
 		# deletes whats not there in google drive
 		logging.info("\nChecking for deletes in Google Drive....\n")
@@ -202,9 +204,6 @@ class DriveControl:
 				self.__justDownloaded.append(gFiles[i])
 
 		self.__fileSystem.copyTree(tempFs)
-
-		self.__fileSystem.houseKeeping() # deletes empty folders in file system
-
 		self.__initialStart = False # initialStart is made False everytime
 		time.sleep(10)
 		self.__routineCheck() # run forever
