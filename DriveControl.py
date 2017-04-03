@@ -55,12 +55,12 @@ class DriveControl:
 			self.__lock.acquire()
 			self.__connection = False
 			self.__lock.release()
-			return self.__internetCheck() # ends function here
-		finally: # we want to close the socket regardless of whether we catch an error or not!
 			sock.close()
+			return self.__internetCheck() # ends function here
 		self.__lock.acquire() # lock the thread while modding the value
 		self.__connection = True
 		self.__lock.release() # release the lock
+		sock.close()
 		time.sleep(3)
 		return self.__internetCheck() # even though this statement is the last thing to be executed call return to prevent stack from building up # ends function here
 
