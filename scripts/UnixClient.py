@@ -5,6 +5,7 @@ import os
 import time
 import mimetypes
 import logging
+import shutil
 
 logging.basicConfig(level = logging.DEBUG) # debug level highest level of logging, can log everything
 
@@ -17,7 +18,25 @@ class UnixClient():
 
 	def createTree(self):
 		self.__check(".", "./")
-		os.chdir("Main")
+		os.chdir(self.__extractCwd(0)) # change hard coded values later
+
+	# extracts the current working directory or the name of the folder containing the scripts folder (folder that containing the scripts)
+	def __extractCwd(self, count): # recursively extracts the directory
+		proc = subprocess.Popen("ls", stdout = subprocess.PIPE)
+		output = proc.stdout.read()
+		output = output.decode("utf-8")
+		ls = output.split("\n") # creates an array out of std out
+		if count != 0:
+			if "scripts" in ls:
+				os.chdir("..")
+				return True
+			else:
+				os.chdir("..")
+				return False
+		for i in range(len(ls)):
+			os.chdir(ls[i])
+			flag = self.__extractCwd(count + 1)
+			if flag: return ls[i]
 
 	def __check(self, cwd, path):
 		os.chdir(cwd)
@@ -34,8 +53,11 @@ class UnixClient():
 		if "FSTree.py" in output: output = output.replace("FSTree.py\n", "")
 		if "File.py" in output: output = output.replace("File.py\n", "")
 		if "UnixClient.py" in output: output = output.replace("UnixClient.py\n", "")
-		if "UnixServer.py" in output: output = output.replace("UnixServer.py\n", "")
 		if "__pycache__" in output: output = output.replace("__pycache__\n", "")
+		if "Drive.py" in output: output = output.replace("Drive.py\n", "")
+		if "DriveControl.py" in output: output = output.replace("DriveControl.py\n", "")
+		if "client_secrets.json" in output: output = output.replace("client_secrets.json\n", "")
+		if "__main__.py" in output: output = output.replace("__main__.py\n", "")
 
 		ls = output.split("\n") # creates an array out of std out
 
@@ -78,7 +100,7 @@ class UnixClient():
 			cwd = os.getcwd()
 			length = len(cwd) # gives you the length of the string
 			# traverse the string backwards to obtain the folder
-			while cwd[length - 1] != "\\":
+			while cwd[length - 1] != "/":
 				folder += cwd[length - 1]
 				length -= 1
 		newFolder = "" # if is not then make a newFolder to store the actual string representation
@@ -92,12 +114,12 @@ class UnixClient():
 
 	def __walkAndDelete(self, path, name, hops):
 		if path == "": # checks if we have no more folders to traverse
-			os.system("rm " + name) # makes the system call to remove
+			os.remove(name) # makes the system call to remove
 			for i in range(hops): # as you cd out delete the empty folders
 				emptyFolder = self.__deleteEmptyFolder() # gets name of the current folder
 				os.chdir("..") # need to actually cd out of the current folder to delete the folder itself
 				if emptyFolder != "":
-					os.removedirs(emptyFolder) # now deletes the folder
+					shutil.rmtree(emptyFolder) # now deletes the folder
 			return # if return is not there then the function will execute rest of the body which will result in an error
 
 		addr = self.__extractFolder(path)
@@ -141,7 +163,7 @@ class UnixClient():
 
 		if ls == []: # if ls is empty, it means that the folder is empty, if it is then delete the folder
 			logging.info("Deleting empty folder from file system...")
-			os.removedirs(cwd)
+			shutil.rmtree(cwd)
 
 	def houseKeeping(self):
 		return self.__fCleanUp(".") # start traversing from the root directory

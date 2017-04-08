@@ -117,11 +117,11 @@ class Tree():
 	'''
 	def deleteFile(self, fileObj):
 		flag = False
-		if not fileObj.getDir or fileObj.getDir == "":
+		if not fileObj.getDir or fileObj.getDir == "": # and would not work because fileObj.getDir cannot be both None and "", can be only either thats why we have or
 			cd = self.__root["ROOT"]
 			for i in range(len(cd)):
 				if not isinstance(cd[i], dict):
-					if cd[i].getName == fileObj.getName and cd[i].getDir == fileObj.getDir:
+					if cd[i].getName == fileObj.getName and cd[i].getDir and fileObj.getDir:
 						del cd[i]
 						return True
 			return flag
@@ -130,12 +130,13 @@ class Tree():
 			for i in range(len(cd)):
 				flag2 = False
 				if not isinstance(cd[i], dict):
-					if cd[i].getName == fileObj.getName and cd[i].getDir == fileObj.getDir: # changes made
+					if cd[i].getName == fileObj.getName and cd[i].getDir == fileObj.getDir: # changees made
 						flag2 = True
 						tempFile = cd[i]
 						del cd[i]
 						if len(cd) == 0: # prevents from having empty folders
 							self.deleteFolder(tempFile.getDir) # self deletes empty folders
+							del tempFile
 						return True
 			if not flag or not flag2: # failed to find the folder
 					return False

@@ -7,9 +7,6 @@ import os
 import time
 import logging
 
-# https://accounts.google.com/o/oauth2/auth?client_id=854380500475-3qcvjb1ubskm8487d2c1528g3
-# mqnbcno.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F&scope=https%3
-# A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive&access_type=offline&response_type=code
 
 logging.basicConfig(level = logging.DEBUG)
 
@@ -19,9 +16,12 @@ class GDrive():
 		self.__gauth.LocalWebserverAuth()
 		self.__drive = GoogleDrive(self.__gauth)
 		self.__gTree = Tree()
-	
+
 	def createTree(self):
 		self.__walkDrive("root", ".", "./", ".")
+
+	def copyTree(self, this): # can access private member of itself
+		self.__gTree = this.__gTree
 
 	def __walkDrive(self, id, cwd, path, folderId):
 		logging.info("Gathering Google Drive data...%s" %(path))
@@ -34,8 +34,8 @@ class GDrive():
 				path += cwd + "/"
 
 			folderId = id # id of the folder currently in
-			
-			# id = google id, title = name, modifiedDate, mimeType = folder or not, 
+
+			# id = google id, title = name, modifiedDate, mimeType = folder or not,
 			# dir = application/vnd.google-apps.folder
 
 			# loops over checks if item in the list is a folder or not if not then add file to the folder
@@ -66,12 +66,12 @@ class GDrive():
 		folder = self.__drive.CreateFile({'title': pathList[0], "parents":  [{"id": id}], "mimeType": "application/vnd.google-apps.folder"})
 		folder.Upload()
 		newLs = self.__drive.ListFile({'q': "'%s' in parents and trashed=false" %(id)}).GetList()
-		
+
 		for i in range(len(newLs)):
 			if newLs[i]["mimeType"] == "application/vnd.google-apps.folder" and newLs[i]["title"] == pathList[0]:
 				del pathList[0]
 				return self.__createF(newLs[i]["id"], pathList)
-		
+
 	# returns the id of the last folder visited
 	def __ccFolder(self, path):
 		pathList = path.split("/")
@@ -104,25 +104,26 @@ class GDrive():
 			return hops
 		else: return hops
 
-		
+
 	def uploadFile(self, obj):
 		logging.info("Uploading %s...." %(obj.getName))
 		id = self.__ccFolder(obj.getDir) # creates the folders necessary
 		gfile = self.__drive.CreateFile({'title': obj.getName, "parents":  [{"kind": "drive#fileLink","id": id}]})
 		hops = self.__walkFS(obj.getDir) # walks inside the folder of the file
-		#gfile.SetContentFile(obj.getName) # finds the file
+		gfile.SetContentFile(obj.getName) # finds the file
 		gfile.Upload() # uploads the file
 		for i in range(hops):
 			os.chdir("..")
-		
+
 	def deleteFile(self, obj):
 		logging.info("Deleting %s...." %(obj.getName))
 		fileObj = self.__gTree.find(obj)
 		if fileObj:
 			file = self.__drive.CreateFile({"id": fileObj.getFileId})
-			file.Delete() 
+			file.Delete()
 			ls = self.__drive.ListFile({'q': "'%s' in parents and trashed=false" %(fileObj.getFolderId)}).GetList()
-			if len(ls) == 0:
+			if len(ls) == 0 and fileObj.getFolderId != "root": # if Google Drive does not contain any files to begin with and if you place one file and then delete it
+							# Google Drive will try to delete the entire root directory which is forbidden so a condition is required to prevent Google Drive from deleting itself
 				folder = self.__drive.CreateFile({"id": fileObj.getFolderId})
 				folder.Delete()
 			return True
@@ -139,7 +140,7 @@ class GDrive():
 				os.chdir("..") # cds out the number of times it hoped into a directory
 
 		else: return False
-	
+
 	def __extractFolderName(self, path):
 		i = 0
 		folder = ""
@@ -161,13 +162,13 @@ class GDrive():
 		if path == "":
 			try:
 				file = self.__drive.CreateFile({'id': id})
-				file.GetContentFile(name) 
+				file.GetContentFile(name)
 			except Exception as e:
 				logging.critical(e)
 			return count
-		
-		proc = subprocess.Popen("ls", stdout = subprocess.PIPE) 
-		output = proc.stdout.read() 
+
+		proc = subprocess.Popen("ls", stdout = subprocess.PIPE)
+		output = proc.stdout.read()
 		output = output.decode("utf-8") # system call std out is put inside a variable as a string format
 
 		ls = output.split("\n") # creates an array ouf ot the std out
@@ -175,7 +176,7 @@ class GDrive():
 		if "" in ls: ls.remove("") # some string format to get the desired string output
 
 		tups = self.__extractFolderName(path)
-		
+
 		if tups[0] not in ls:
 			os.makedirs(tups[0]) # creates the directory if it doesn't exist
 			os.chdir(tups[0]) # equivalent to cd and hence should only take a folder name and not a path name
@@ -194,11 +195,11 @@ class GDrive():
 		try:
 			ls = self.__drive.ListFile({'q': "'%s' in parents and trashed=false" %(id)}).GetList()
 			# makes sure the stack is not empty
-			# if there are no folders or files then length of ls will be 0 
-			# therefore it's okay to delete the folder while 
+			# if there are no folders or files then length of ls will be 0
+			# therefore it's okay to delete the folder while
 			# the for loop allows current stack to not get popped off as the function is pending
 			# for the other recursion to finish
-			
+
 			if len(ls) == 0 and not id == "root":
 				folder = self.__drive.CreateFile({"id": id})
 				folder.Delete() # delete the empty folder
@@ -221,4 +222,3 @@ class GDrive():
 	def deleteTree(self):
 		self.__gTree = None
 		self.__gTree = Tree()
-
