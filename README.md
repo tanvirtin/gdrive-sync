@@ -38,6 +38,6 @@ The directory is now your new Google Drive!
 
 
 
-![cpu](https://cloud.githubusercontent.com/assets/25164326/25223340/279c0216-2589-11e7-8103-dbc1e805b30e.png)
+![cpu](https://cloud.githubusercontent.com/assets/25164326/25223467/71260dfa-2589-11e7-9956-10a708cb54de.png)
 
 
