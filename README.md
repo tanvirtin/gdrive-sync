@@ -36,5 +36,8 @@ The directory is now your new Google Drive!
 
 ![download-time](https://cloud.githubusercontent.com/assets/25164326/25222414/64a954cc-2586-11e7-804a-3e9a2ac55296.png)
 
-![cpu-](https://cloud.githubusercontent.com/assets/25164326/25222367/452a2ea0-2586-11e7-9c93-a3706f470fdb.png)
+
+
+![cpu](https://cloud.githubusercontent.com/assets/25164326/25222551/bf68d054-2586-11e7-8c24-3621b8af1f8a.png)
+
 
