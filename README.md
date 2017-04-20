@@ -1,5 +1,7 @@
 # Google-Drive-File-System-Synchronization-with-Ubuntu
 
+![uml-ufwgd](https://cloud.githubusercontent.com/assets/25164326/25222441/76c2baf4-2586-11e7-8cfa-7133bd97cd87.png)
+
 # Context:
 
 Google Drive is a file storage and synchronization service developed by Google. It allows users to store files in the cloud, synchronize them across devices, and share them. In addition to a website, it offers apps which automatically synchronize with Windows and Mac OS computers, as well as Android and iOS smartphones and tablets.
@@ -28,3 +30,11 @@ After the following have been installed simply open up a **terminal** and type i
 Move to the directory where the **/scripts** directory is located and simply type in **python3 __main__.py** to execute the program.
 
 The directory is now your new Google Drive!
+
+
+# Tested Data:
+
+![download-time](https://cloud.githubusercontent.com/assets/25164326/25222414/64a954cc-2586-11e7-804a-3e9a2ac55296.png)
+
+![cpu-](https://cloud.githubusercontent.com/assets/25164326/25222367/452a2ea0-2586-11e7-9c93-a3706f470fdb.png)
+
